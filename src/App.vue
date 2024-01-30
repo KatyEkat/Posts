@@ -1,28 +1,28 @@
 <template>
   <div id="app">
-    <div class="toolbar">
-      <label for="toolbar" class="toolbar-label">Фильтр по автору:</label>
-      <input v-model="authorFilter" id="authorFilter" class="toolbar-input" placeholder="Введите имя автора" type="text"/>
+    <h1>Посты</h1>
+    <div class='toolbar'>
+      <label for="authorFilter" class="toolbar-label">Фильтр по автору:</label>
+      <input v-model="authorFilter" id="authorFilter" placeholder='Введите имя автора' class="toolbar-input"/>
       <button @click="filterPosts" class="toolbar-button">Искать</button>
     </div>
     <div v-if="loading">Загрузка...</div>
     <div v-else>
-      <div v-for="post in filteredPosts" :key="post.id" class="post-content">
-        <h2 class="post-title">{{ post.title }}</h2>
-        <p class="post-description">{{ post.body }}</p>
-        <p >Автор: {{ post.userId }}</p>
-        <button @click="deletePost(post.id)" class="toolbar-button">Удалить</button>
-      </div>
+      <PostCard
+        class='post-card'
+        v-for="post in filteredPosts"
+        :key="post.id"
+        :post="post"
+        :on-delete="deletePost"
+        style='margin-bottom: 10px;'
+      ></PostCard>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: 'https://jsonplaceholder.typicode.com'
-})
+import PostCard from './Components/PostCard.vue'
+import { getPosts, deletePost } from './api/api'
 
 export default {
   data () {
@@ -32,13 +32,13 @@ export default {
       loading: true
     }
   },
+  components: {
+    PostCard
+  },
   computed: {
     filteredPosts () {
-      return this.posts.filter((post) => {
-        return (
-          this.authorFilter === '' ||
-          post.userId.toString() === this.authorFilter
-        )
+      return this.posts.filter(post => {
+        return this.authorFilter === '' || post.userId.toString() === this.authorFilter
       })
     }
   },
@@ -48,23 +48,21 @@ export default {
       this.fetchPosts()
     },
     deletePost (postId) {
-      api
-        .delete(`/posts/${postId}`)
+      deletePost(postId)
         .then(() => {
-          this.posts = this.posts.filter((post) => post.id !== postId)
+          this.posts = this.posts.filter(post => post.id !== postId)
         })
-        .catch((error) => {
+        .catch(error => {
           console.error('Ошибка при удалении поста:', error)
         })
     },
     fetchPosts () {
-      api
-        .get('/posts')
-        .then((response) => {
+      getPosts()
+        .then(response => {
           this.posts = response.data
         })
-        .catch((error) => {
-          console.error('Ошибка при загрузке постов', error)
+        .catch(error => {
+          console.error('Ошибка при загрузке постов:', error)
         })
         .finally(() => {
           this.loading = false
@@ -78,6 +76,12 @@ export default {
 </script>
 
 <style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 #app{
   margin: 30px 20px;
 }
@@ -87,6 +91,7 @@ export default {
   flex-direction: row;
   gap: 10px;
   align-items: center;
+  margin-bottom: 15px;
 }
 
 .toolbar-label{
@@ -141,5 +146,9 @@ export default {
 .post-description {
   font-size: 16px;
   font-style: normal;
+}
+
+.post-card{
+  margin-bottom: 10px;
 }
 </style>
